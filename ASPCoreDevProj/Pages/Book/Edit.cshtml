@@ -1,0 +1,199 @@
+﻿@page
+@model ASPCoreDevProj.Pages.Book.EditModel
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+<h1>Edit</h1>
+
+<h4>Book</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="Book.Id" />
+            <div class="form-group">
+                <label asp-for="Book.Title" class="control-label"></label>
+                <input asp-for="Book.Title" class="form-control" />
+                <span asp-validation-for="Book.Title" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Book.YearOfPublication" class="control-label"></label>
+                <input asp-for="Book.YearOfPublication" class="form-control" />
+                <span asp-validation-for="Book.YearOfPublication" class="text-danger"></span>
+            </div>
+            <div id="AuthorContainer">
+                <div class="view-item-container">
+                    @if (Model.Book.Authors != null)
+                    {
+                        @if (Model.Book.Authors.Count() > 0)
+                        {
+                            <div class="form-group header-container">
+                                <label class="control-label">Authors</label>
+                            </div>
+                        }
+                        @for (int i = 0; i < Model.Book.Authors.Count; i++)
+                        {
+                            <div class="form-group item-holder" data-identity="@Model.Book.Authors[i].Id">
+                                <input asp-for="Book.Authors[i].Id" type="hidden" />
+                                <span asp-validation-for="Book.Authors[i].Name" class="text-danger"></span>
+                                <input asp-for="Book.Authors[i].Name" class="form-control" />
+                                <input type="submit" value="Remove" class="btn btn-primary" />
+                            </div>
+                        }
+                    }
+                </div>
+                <div class="form-group add-item-container">
+                    <div class="form-group">
+                        <select name="Name" class="full-item-list"></select>
+                    </div>
+                    <a id="add-item" class="btn btn-primary" href="#">Add</a>
+                </div>
+            </div>
+            <div id="GenreContainer">
+                <div class="view-item-container">
+                    @if (Model.Book.Genres != null)
+                    {
+                        @if (Model.Book.Genres.Count() > 0)
+                        {
+                            <div class="form-group header-container">
+                                <label class="control-label">Genres</label>
+                            </div>
+                        }
+                        <div class="item-container">
+                            @for (int i = 0; i < Model.Book.Genres.Count; i++)
+                            {
+                                <div class="form-group item-holder" data-item-identity="@Model.Book.Genres[i].Id">
+                                    <input asp-for="Book.Genres[i].Id" type="hidden" />
+                                    <span asp-validation-for="Book.Genres[i].Name" class="text-danger"></span>
+                                    <input type="text" asp-for="Book.Genres[i].Name" class="form-control" />
+                                    <input type="submit" value="Remove" class="btn btn-primary" />
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+                <div class="form-group add-item-container">
+                    <div class="form-group">
+                        <select name="Name" class="full-item-list"></select>
+                    </div>
+                    <a class="btn btn-primary add-item" href="#">Add</a>
+                </div>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Save" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-page="./Index">Back to List</a>
+</div>
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
+
+<script>
+    var GenreList = JSON.parse('@Html.Raw(Model.JGenres)');
+    var AuthorList = JSON.parse('@Html.Raw(Model.JAuthors)');
+
+    function getRoute(base, container, catergory, name) {
+        for (let i = 0; i < container.Catergory.length; i++) {
+            if (container.Catergory[i] == catergory) {
+                console.log("result");
+                console.log(base + container[catergory].base + container[catergory][name]);
+                return base + " " + container[catergory].base + " " + container[catergory][name];
+            }
+        }
+        throw 'Route not found';
+    }
+
+    var DocObj = {
+        base: "",
+        container: {
+            Catergory: [
+                "View",
+                "Add"
+            ],
+            View: {
+                base: ".view-item-container",
+                header: ".header-container",
+                items: ".item-holder"
+            },
+            Add: {
+                base: ".add-item-container",
+                select: ".full-item-list",
+                button: ".add-item"
+            }
+        },
+        getRoute: function (catergory, name) {
+            return getRoute(this.base, this.container, catergory, name);
+        }
+    }
+
+    var GenreDocObj = Object.create(DocObj);
+    GenreDocObj.base = '#GenreContainer';
+
+    var AuthorDocObj = Object.create(DocObj);
+    AuthorDocObj.base = '#AuthorContainer';
+
+    console.log("AuthorDocObj");
+    console.log(AuthorDocObj);
+    console.log("GenreDocObj");
+    console.log(GenreDocObj);
+
+    $(document).ready(function () {
+        var genre = "Genres";
+        var author = "Authors";
+
+        var glist = $(GenreDocObj.getRoute("Add", "select"));
+        console.log("glist");
+        console.log(glist);
+        console.log(GenreDocObj.getRoute("Add", "select"));
+        $.each(GenreList, function () {
+            glist.append($("<option />").val(this.Id).text(this.Name));
+        });
+
+        var alist = $(AuthorDocObj.getRoute("Add", "select"));
+        console.log("alist");
+        console.log(alist);
+        $.each(AuthorList, function () {
+            alist.append($("<option />").val(this.Id).text(this.Name));
+        });
+
+        $(GenreDocObj.getRoute("Add", "button")).on('click', function (e) {
+            if (!data) return e.preventDefault();
+
+            //  Get list of all existing items
+            var itemscontainer = $(GenreDocObj.getRoute("View", "items"));
+            var items = itemscontainer.data("item-identity");
+            console.log("items");
+            console.log(items);
+            var itemsLength = itemscontainer.length;
+
+
+            //  check if item exists in list
+                //  error if already exists
+                //  add if doesn't exist
+                //  Remove Item From select list
+            if (items.includes(e.value)) {
+                $("<div class='form-group item-holder;' data-identity='" + e.value + "'>")
+                    .html('<input type="hidden" id="Book_' + genre + '_0__Id" name="Book.' + genre + '[' + itemsLength + '].Id" value="' + e.value + '">' +
+                    '<span class="text-danger field-validation-valid" data-valmsg-for="Book.' + genre + '[' + itemsLength + '].Name" data-valmsg-replace="true"></span>' +
+                    '<input class="form-control" type="text" id="Book_' + genre + '_0__Name" name="Book.' + genre + '[' + itemsLength + '].Name" value="' + e.options[e.selectedIndex].text + '">')
+                    .appendTo(container.items);
+
+                $(e).remove();
+
+            }
+            else {
+                console.log("Error");
+            }
+
+
+        });
+    });
+</script>
